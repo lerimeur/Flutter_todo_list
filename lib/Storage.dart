@@ -4,23 +4,24 @@ import 'package:flutter/widgets.dart';
 
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
+import 'dart:developer';
 import './Todotype.dart';
 
 class DataBase {
   Future<Database> database;
 
   void init() async {
+    log('INIT');
     WidgetsFlutterBinding.ensureInitialized();
     database = openDatabase(
       // Set the path to the database. Note: Using the `join` function from the
       // `path` package is best practice to ensure the path is correctly
       // constructed for each platform.
-      join(await getDatabasesPath(), 'doggie_database.db'),
+      join(await getDatabasesPath(), 'todos.db'),
       // When the database is first created, create a table to store dogs.
       onCreate: (db, version) {
         return db.execute(
-          "CREATE TABLE todos(id INTEGER PRIMARY KEY, title TEXT, desc TEXT,fait INTEGER)",
+          "CREATE TABLE todos(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, desc TEXT,done INTEGER)",
         );
       },
       // Set the version. This executes the onCreate function and provides a
@@ -29,7 +30,18 @@ class DataBase {
     );
   }
 
+  Future<void> cleanAll() async {
+    log('CLEAN ALL');
+    final value = await getItem();
+    if (value.length > 0) {
+      for (var item in value) {
+        deleteItem(item.id);
+      }
+    }
+  }
+
   Future<void> insertItem(Todo todo) async {
+    log('INSERT ITEM');
     // Get a reference to the database.
     final Database db = await database;
 
@@ -44,12 +56,12 @@ class DataBase {
   }
 
   Future<List<Todo>> getItem() async {
+    log('GET ALL ITEM');
     // Get a reference to the database.
     final Database db = await database;
 
     // Query the table for all The Dogs.
     final List<Map<String, dynamic>> maps = await db.query('todos');
-
     // Convert the List<Map<String, dynamic> into a List<Dog>.
     return List.generate(maps.length, (i) {
       return Todo(
@@ -62,6 +74,7 @@ class DataBase {
   }
 
   Future<void> updateItem(Todo todo) async {
+    log('UPDATE ITEM');
     // Get a reference to the database.
     final db = await database;
 
@@ -77,6 +90,7 @@ class DataBase {
   }
 
   Future<void> deleteItem(int id) async {
+    log('DEL ONE ITEM');
     // Get a reference to the database.
     final db = await database;
 

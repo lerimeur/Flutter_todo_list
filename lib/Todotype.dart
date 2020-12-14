@@ -8,7 +8,6 @@ class Todo {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'title': title,
       'desc': desc,
       'done': done,
@@ -19,6 +18,6 @@ class Todo {
   // each dog when using the print statement.
   @override
   String toString() {
-    return 'Dog{id: $id, title: $title, desc: $desc, fait: $done}';
+    return 'Todo{id: $id, title: $title, desc: $desc, done: $done}';
   }
 }
