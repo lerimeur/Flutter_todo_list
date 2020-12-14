@@ -29,9 +29,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+    //main();
   }
 
   @override

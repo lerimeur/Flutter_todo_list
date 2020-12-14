@@ -5,28 +5,31 @@ import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-void main() async {
-  // Avoid errors caused by flutter upgrade.
-  // Importing 'package:flutter/widgets.dart' is required.
-  WidgetsFlutterBinding.ensureInitialized();
-  // Open the database and store the reference.
-  final Future<Database> database = openDatabase(
-    // Set the path to the database. Note: Using the `join` function from the
-    // `path` package is best practice to ensure the path is correctly
-    // constructed for each platform.
-    join(await getDatabasesPath(), 'doggie_database.db'),
-    // When the database is first created, create a table to store dogs.
-    onCreate: (db, version) {
-      return db.execute(
-        "CREATE TABLE dogs(id INTEGER PRIMARY KEY, name TEXT, age INTEGER)",
-      );
-    },
-    // Set the version. This executes the onCreate function and provides a
-    // path to perform database upgrades and downgrades.
-    version: 1,
-  );
+import './Todotype.dart';
 
-  Future<void> insertDog(Dog dog) async {
+class DataBase {
+  Future<Database> database;
+
+  void init() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    database = openDatabase(
+      // Set the path to the database. Note: Using the `join` function from the
+      // `path` package is best practice to ensure the path is correctly
+      // constructed for each platform.
+      join(await getDatabasesPath(), 'doggie_database.db'),
+      // When the database is first created, create a table to store dogs.
+      onCreate: (db, version) {
+        return db.execute(
+          "CREATE TABLE todos(id INTEGER PRIMARY KEY, title TEXT, desc TEXT,fait INTEGER)",
+        );
+      },
+      // Set the version. This executes the onCreate function and provides a
+      // path to perform database upgrades and downgrades.
+      version: 1,
+    );
+  }
+
+  Future<void> insertItem(Todo todo) async {
     // Get a reference to the database.
     final Database db = await database;
 
@@ -34,107 +37,156 @@ void main() async {
     // `conflictAlgorithm`. In this case, if the same dog is inserted
     // multiple times, it replaces the previous data.
     await db.insert(
-      'dogs',
-      dog.toMap(),
+      'todos',
+      todo.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<List<Dog>> dogs() async {
+  Future<List<Todo>> getItem() async {
     // Get a reference to the database.
     final Database db = await database;
 
     // Query the table for all The Dogs.
-    final List<Map<String, dynamic>> maps = await db.query('dogs');
+    final List<Map<String, dynamic>> maps = await db.query('todos');
 
     // Convert the List<Map<String, dynamic> into a List<Dog>.
     return List.generate(maps.length, (i) {
-      return Dog(
+      return Todo(
         id: maps[i]['id'],
-        name: maps[i]['name'],
-        age: maps[i]['age'],
+        title: maps[i]['name'],
+        desc: maps[i]['desc'],
+        done: maps[i]['done'],
       );
     });
   }
 
-  Future<void> updateDog(Dog dog) async {
+  Future<void> updateItem(Todo todo) async {
     // Get a reference to the database.
     final db = await database;
 
     // Update the given Dog.
     await db.update(
-      'dogs',
-      dog.toMap(),
+      'todos',
+      todo.toMap(),
       // Ensure that the Dog has a matching id.
       where: "id = ?",
       // Pass the Dog's id as a whereArg to prevent SQL injection.
-      whereArgs: [dog.id],
+      whereArgs: [todo.id],
     );
   }
 
-  Future<void> deleteDog(int id) async {
+  Future<void> deleteItem(int id) async {
     // Get a reference to the database.
     final db = await database;
 
     // Remove the Dog from the database.
     await db.delete(
-      'dogs',
+      'todos',
       // Use a `where` clause to delete a specific dog.
       where: "id = ?",
       // Pass the Dog's id as a whereArg to prevent SQL injection.
       whereArgs: [id],
     );
   }
-
-  var fido = Dog(
-    id: 0,
-    name: 'Fido',
-    age: 35,
-  );
-
-  // Insert a dog into the database.
-  await insertDog(fido);
-
-  // Print the list of dogs (only Fido for now).
-  print(await dogs());
-
-  // Update Fido's age and save it to the database.
-  fido = Dog(
-    id: fido.id,
-    name: fido.name,
-    age: fido.age + 7,
-  );
-  await updateDog(fido);
-
-  // Print Fido's updated information.
-  print(await dogs());
-
-  // Delete Fido from the database.
-  await deleteDog(fido.id);
-
-  // Print the list of dogs (empty).
-  print(await dogs());
 }
 
-class Dog {
-  final int id;
-  final String name;
-  final int age;
+// void main() async {
+//   // Avoid errors caused by flutter upgrade.
+//   // Importing 'package:flutter/widgets.dart' is required.
+//   WidgetsFlutterBinding.ensureInitialized();
+//   // Open the database and store the reference.
+//   final Future<Database> database = openDatabase(
+//     // Set the path to the database. Note: Using the `join` function from the
+//     // `path` package is best practice to ensure the path is correctly
+//     // constructed for each platform.
+//     join(await getDatabasesPath(), 'doggie_database.db'),
+//     // When the database is first created, create a table to store dogs.
+//     onCreate: (db, version) {
+//       return db.execute(
+//         "CREATE TABLE todos(id INTEGER PRIMARY KEY, title TEXT, desc TEXT,fait INTEGER)",
+//       );
+//     },
+//     // Set the version. This executes the onCreate function and provides a
+//     // path to perform database upgrades and downgrades.
+//     version: 1,
+//   );
 
-  Dog({this.id, this.name, this.age});
+//   Future<List<Todo>> getItem() async {
+//     // Get a reference to the database.
+//     final Database db = await database;
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'age': age,
-    };
-  }
+//     // Query the table for all The Dogs.
+//     final List<Map<String, dynamic>> maps = await db.query('todos');
 
-  // Implement toString to make it easier to see information about
-  // each dog when using the print statement.
-  @override
-  String toString() {
-    return 'Dog{id: $id, name: $name, age: $age}';
-  }
-}
+//     // Convert the List<Map<String, dynamic> into a List<Dog>.
+//     return List.generate(maps.length, (i) {
+//       return Todo(
+//         id: maps[i]['id'],
+//         title: maps[i]['name'],
+//         desc: maps[i]['desc'],
+//         done: maps[i]['done'],
+//       );
+//     });
+//   }
+
+//   Future<void> updateItem(Todo todo) async {
+//     // Get a reference to the database.
+//     final db = await database;
+
+//     // Update the given Dog.
+//     await db.update(
+//       'todos',
+//       todo.toMap(),
+//       // Ensure that the Dog has a matching id.
+//       where: "id = ?",
+//       // Pass the Dog's id as a whereArg to prevent SQL injection.
+//       whereArgs: [todo.id],
+//     );
+//   }
+
+//   Future<void> deleteItem(int id) async {
+//     // Get a reference to the database.
+//     final db = await database;
+
+//     // Remove the Dog from the database.
+//     await db.delete(
+//       'todos',
+//       // Use a `where` clause to delete a specific dog.
+//       where: "id = ?",
+//       // Pass the Dog's id as a whereArg to prevent SQL injection.
+//       whereArgs: [id],
+//     );
+//   }
+
+//   var fido = Todo(
+//     id: 0,
+//     title: 'fido',
+//     desc: 'hello world',
+//     done: 0,
+//   );
+
+//   // Insert a dog into the database.
+//   await insertItem(fido);
+
+//   // Print the list of dogs (only Fido for now).
+//   print(await getItem());
+
+//   // Update Fido's age and save it to the database.
+//   fido = Todo(
+//     id: fido.id,
+//     title: fido.title,
+//     desc: fido.desc,
+//     done: fido.done + 1,
+//   );
+//   await updateItem(fido);
+
+//   // Print Fido's updated information.
+//   print(await getItem());
+
+//   // Delete Fido from the database.
+//   await deleteItem(fido.id);
+
+//   // Print the list of dogs (empty).
+//   print(await getItem());
+// }
